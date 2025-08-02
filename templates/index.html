@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block title %}Code Analyzer - Upload Code{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-bottom: 1.5rem; color: var(--accent-color);">
+        <i class="fas fa-upload"></i> Code Analysis Tool
+    </h2>
+    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+        Upload your code file or paste code directly for comprehensive analysis using Gemini AI.
+    </p>
+
+    <form id="codeForm" enctype="multipart/form-data">
+        <!-- Code Input Tabs -->
+        <div style="margin-bottom: 2rem;">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <button type="button" class="btn tab-btn active" onclick="switchTabAndPaste('paste')" id="paste-tab">
+                    <i class="fas fa-clipboard"></i> Paste Code
+                </button>
+                <button type="button" class="btn btn-secondary tab-btn" onclick="switchTab('upload')" id="upload-tab">
+                    <i class="fas fa-file-upload"></i> Upload File
+                </button>
+            </div>
+        </div>
+
+        <!-- Paste Code Section -->
+        <div id="paste-section" class="input-section">
+            <div class="form-group">
+                <label for="code_text" class="form-label">
+                    <i class="fas fa-code"></i> Paste Your Code Here
+                </label>
+                <textarea 
+                    id="code_text" 
+                    name="code_text" 
+                    class="form-control" 
+                    placeholder="Paste your code here for analysis...
+
+Supported languages: Python, JavaScript, Java, C++, C#, PHP, Ruby, Go, Rust, Swift, Kotlin, TypeScript, HTML, CSS, SQL, and more!"
+                    rows="12"
+                ></textarea>
+                <small style="color: var(--text-secondary); margin-top: 0.5rem; display: block;">
+                    <i class="fas fa-info-circle"></i> Tip: Click the "Paste Code" tab to automatically paste from clipboard, or manually paste code in any supported programming language
+                </small>
+            </div>
+        </div>
+
+        <!-- Upload File Section -->
+        <div id="upload-section" class="input-section" style="display: none;">
+            <div class="form-group">
+                <label for="code_file" class="form-label">
+                    <i class="fas fa-file-code"></i> Upload Code File
+                </label>
+                <div class="file-upload">
+                    <input type="file" id="code_file" name="code_file" accept=".py,.js,.java,.cpp,.c,.cs,.php,.rb,.go,.rs,.swift,.kt,.ts,.html,.css,.sql,.sh,.bat,.ps1,.txt">
+                    <label for="code_file" class="file-upload-label">
+                        <div>
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
+                            <div style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.5rem;">Choose a file or drag and drop</div>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                Supported: .py, .js, .java, .cpp, .c, .cs, .php, .rb, .go, .rs, .swift, .kt, .ts, .html, .css, .sql, .sh, .bat, .ps1, .txt
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem;">
+                                Max file size: 16MB
+                            </div>
+                        </div>
+                    </label>
+                </div>
+                <div id="file-info" style="margin-top: 1rem; display: none;">
+                    <div style="padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-color);">
+                        <i class="fas fa-file-alt"></i> <span id="file-name"></span>
+                        <span style="color: var(--text-secondary); margin-left: 1rem;">(<span id="file-size"></span>)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-group text-center">
+            <button type="submit" class="btn" id="submit-btn" style="font-size: 1.1rem; padding: 1rem 2rem;">
+                <i class="fas fa-search"></i> Analyze Code
+            </button>
+        </div>
+    </form>
+
+    <!-- Error Display -->
+    <div id="error-message" class="alert alert-error" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i> <span id="error-text"></span>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="card">
+    <h3 style="color: var(--accent-color); margin-bottom: 1rem;">
+        <i class="fas fa-star"></i> Analysis Features
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div style="padding: 1rem; background-color: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <h4 style="color: var(--accent-color); margin-bottom: 0.5rem;">
+                <i class="fas fa-bug"></i> Syntax & Errors
+            </h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Detects syntax errors, grammar violations, and rule breaches
+            </p>
+        </div>
+        <div style="padding: 1rem; background-color: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <h4 style="color: var(--accent-color); margin-bottom: 0.5rem;">
+                <i class="fas fa-palette"></i> Code Style
+            </h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Checks formatting, naming conventions, and style guide adherence
+            </p>
+        </div>
+        <div style="padding: 1rem; background-color: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <h4 style="color: var(--accent-color); margin-bottom: 0.5rem;">
+                <i class="fas fa-shield-alt"></i> Security
+            </h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Identifies security vulnerabilities and unsafe patterns
+            </p>
+        </div>
+        <div style="padding: 1rem; background-color: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <h4 style="color: var(--accent-color); margin-bottom: 0.5rem;">
+                <i class="fas fa-tachometer-alt"></i> Performance
+            </h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Analyzes algorithms, memory usage, and optimization opportunities
+            </p>
+        </div>
+        <div style="padding: 1rem; background-color: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <h4 style="color: var(--accent-color); margin-bottom: 0.5rem;">
+                <i class="fas fa-tools"></i> Best Practices
+            </h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Suggests improvements and modern coding practices
+            </p>
+        </div>
+        <div style="padding: 1rem; background-color: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <h4 style="color: var(--accent-color); margin-bottom: 0.5rem;">
+                <i class="fas fa-chart-line"></i> Metrics
+            </h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Provides complexity metrics and maintainability scores
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Global variable to track active tab
+    let activeTab = 'paste'; // Default to paste tab
+    
+    // Tab switching functionality
+    function switchTab(tab) {
+        const pasteSection = document.getElementById('paste-section');
+        const uploadSection = document.getElementById('upload-section');
+        const pasteTab = document.getElementById('paste-tab');
+        const uploadTab = document.getElementById('upload-tab');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Update global active tab variable
+        activeTab = tab;
+        
+        if (tab === 'paste') {
+            pasteSection.style.display = 'block';
+            uploadSection.style.display = 'none';
+            pasteTab.classList.add('active');
+            pasteTab.classList.remove('btn-secondary');
+            uploadTab.classList.remove('active');
+            uploadTab.classList.add('btn-secondary');
+            
+            // Clear file input
+            document.getElementById('code_file').value = '';
+            document.getElementById('file-info').style.display = 'none';
+        } else {
+            pasteSection.style.display = 'none';
+            uploadSection.style.display = 'block';
+            uploadTab.classList.add('active');
+            uploadTab.classList.remove('btn-secondary');
+            pasteTab.classList.remove('active');
+            pasteTab.classList.add('btn-secondary');
+            
+            // Clear text area
+            document.getElementById('code_text').value = '';
+        }
+        
+        // Hide error message when switching tabs
+        if (errorMessage) {
+            errorMessage.style.display = 'none';
+        }
+    }
+
+    // Combined tab switching and clipboard pasting
+    async function switchTabAndPaste(tab) {
+        // First switch to the tab
+        switchTab(tab);
+        
+        // Then paste from clipboard if it's the paste tab
+        if (tab === 'paste') {
+            const codeTextarea = document.getElementById('code_text');
+            
+            // Try to read from clipboard immediately
+            try {
+                // Request clipboard permission and read
+                const text = await navigator.clipboard.readText();
+                if (text && text.trim()) {
+                    // Replace literal \n with actual newlines
+                    const cleanText = text.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+                    codeTextarea.value = cleanText;
+                    codeTextarea.focus();
+                    showClipboardSuccess('Code pasted from clipboard!');
+                } else {
+                    codeTextarea.focus();
+                    showClipboardError('Clipboard is empty. Please copy some code first.');
+                }
+            } catch (err) {
+                console.error('Clipboard access failed:', err);
+                // Focus textarea and show manual paste instruction
+                codeTextarea.focus();
+                showClipboardError('Please use Ctrl+V to paste your code manually.');
+            }
+        }
+    }
+
+    // File upload handling
+    document.getElementById('code_file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        
+        if (file) {
+            // Check file size limit (16MB)
+            if (file.size > 16 * 1024 * 1024) {
+                showError('File size exceeds 16MB limit.');
+                e.target.value = ''; // Clear the input
+                fileInfo.style.display = 'none';
+                return;
+            }
+            
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+            
+            // Hide any previous error messages
+            const errorMessage = document.getElementById('error-message');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
+        } else {
+            fileInfo.style.display = 'none';
+        }
+    });
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Form submission
+    document.getElementById('codeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const codeText = document.getElementById('code_text').value.trim();
+        const codeFile = document.getElementById('code_file').files[0];
+        const errorMessage = document.getElementById('error-message');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        // Hide previous errors
+        errorMessage.style.display = 'none';
+        
+        // Validate input based on active tab
+        if (activeTab === 'paste') {
+            if (!codeText) {
+                showError('Please paste some code to analyze.');
+                return;
+            }
+        } else if (activeTab === 'upload') {
+            if (!codeFile) {
+                showError('Please select a file to upload.');
+                return;
+            }
+        }
+        
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        // Create form data
+        const formData = new FormData();
+        if (activeTab === 'paste' && codeText) {
+            formData.append('code_text', codeText);
+        } else if (activeTab === 'upload' && codeFile) {
+            formData.append('code_file', codeFile);
+        }
+        
+        // Submit to server
+        fetch('/analyze', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect to progress page
+                window.location.href = '/progress';
+            } else {
+                showError(data.error || 'An error occurred while processing your request.');
+                resetSubmitButton();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Network error. Please try again.');
+            resetSubmitButton();
+        });
+    });
+
+    function showError(message) {
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        errorText.textContent = message;
+        errorMessage.style.display = 'block';
+        errorMessage.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetSubmitButton() {
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-search"></i> Analyze Code';
+    }
+
+    // Drag and drop functionality
+    const fileUploadLabel = document.querySelector('.file-upload-label');
+    const fileInput = document.getElementById('code_file');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileUploadLabel.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        fileUploadLabel.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        fileUploadLabel.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        fileUploadLabel.style.borderColor = 'var(--accent-color)';
+        fileUploadLabel.style.backgroundColor = 'var(--bg-secondary)';
+    }
+
+    function unhighlight(e) {
+        fileUploadLabel.style.borderColor = 'var(--border-color)';
+        fileUploadLabel.style.backgroundColor = 'var(--bg-primary)';
+    }
+
+    fileUploadLabel.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    }
+
+
+
+    function showClipboardSuccess(message) {
+        // Create temporary success message
+        const successDiv = document.createElement('div');
+        successDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        `;
+        successDiv.innerHTML = `<i class="fas fa-check"></i> ${message}`;
+        document.body.appendChild(successDiv);
+        
+        setTimeout(() => {
+            document.body.removeChild(successDiv);
+        }, 3000);
+    }
+
+    function showClipboardError(message) {
+        // Create temporary error message
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--error-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        `;
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            document.body.removeChild(errorDiv);
+        }, 5000);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Code Analyzer - Results{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="color: var(--accent-color); margin: 0;">
+            <i class="fas fa-chart-bar"></i> Analysis Results
+        </h2>
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="copyResults()" class="btn">
+                <i class="fas fa-copy"></i> Copy Results
+            </button>
+            <a href="/" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+    
+    {% if result.error %}
+    <div class="alert alert-error">
+        <i class="fas fa-exclamation-triangle"></i> {{ result.message }}
+    </div>
+    {% endif %}
+    
+    <!-- Analysis Summary -->
+    {% if result.analysis_summary %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="metric-card">
+            <div class="metric-value">{{ result.analysis_summary.total_issues }}</div>
+            <div class="metric-label">Total Issues</div>
+        </div>
+        <div class="metric-card critical">
+            <div class="metric-value">{{ result.analysis_summary.critical_issues }}</div>
+            <div class="metric-label">Critical</div>
+        </div>
+        <div class="metric-card major">
+            <div class="metric-value">{{ result.analysis_summary.major_issues }}</div>
+            <div class="metric-label">Major</div>
+        </div>
+        <div class="metric-card minor">
+            <div class="metric-value">{{ result.analysis_summary.minor_issues }}</div>
+            <div class="metric-label">Minor</div>
+        </div>
+        <div class="metric-card suggestions">
+            <div class="metric-value">{{ result.analysis_summary.suggestions }}</div>
+            <div class="metric-label">Suggestions</div>
+        </div>
+        <div class="metric-card score">
+            <div class="metric-value">{{ result.analysis_summary.overall_score }}</div>
+            <div class="metric-label">Overall Score</div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Language Detection -->
+    {% if result.language_detection %}
+    <div style="margin-bottom: 1rem;">
+        <strong>Language:</strong> {{ result.language_detection.primary_language }}
+        {% if result.language_detection.version %} ({{ result.language_detection.version }}){% endif %}
+        <span style="color: var(--text-secondary); margin-left: 1rem;">Confidence: {{ result.language_detection.confidence }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JSON Output Section -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="color: var(--accent-color); margin: 0;">
+            <i class="fas fa-code"></i> Detailed Analysis (JSON)
+        </h3>
+        <div style="display: flex; gap: 0.5rem;">
+            <button onclick="toggleJsonView()" class="btn btn-secondary" id="toggle-btn">
+                <i class="fas fa-eye"></i> Pretty View
+            </button>
+            <button onclick="copyJson()" class="btn btn-secondary">
+                <i class="fas fa-copy"></i> Copy JSON
+            </button>
+        </div>
+    </div>
+    
+    <!-- Pretty JSON View -->
+    <div id="pretty-json" class="json-container">
+        <pre><code id="json-pretty">{{ result | tojson(indent=2) }}</code></pre>
+    </div>
+    
+    <!-- Raw JSON View -->
+    <div id="raw-json" class="json-container" style="display: none;">
+        <textarea id="json-raw" class="form-control" readonly style="min-height: 400px; font-family: 'Courier New', monospace; font-size: 0.9rem;">{{ result | tojson(indent=2) }}</textarea>
+    </div>
+</div>
+
+<!-- Quick Analysis Section -->
+{% if result.analysis_summary and not result.error %}
+<div class="card">
+    <h3 style="color: var(--accent-color); margin-bottom: 1.5rem;">
+        <i class="fas fa-lightning"></i> Quick Overview
+    </h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <!-- Syntax Errors -->
+        {% if result.syntax_errors %}
+        <div class="issue-section">
+            <h4 style="color: var(--error-color); margin-bottom: 1rem;">
+                <i class="fas fa-bug"></i> Syntax Errors ({{ result.syntax_errors | length }})
+            </h4>
+            {% for error in result.syntax_errors[:3] %}
+            <div class="issue-item">
+                <div style="font-weight: 500;">Line {{ error.line }}{% if error.column %}, Column {{ error.column }}{% endif %}</div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">{{ error.message }}</div>
+            </div>
+            {% endfor %}
+            {% if result.syntax_errors | length > 3 %}
+            <div class="hidden-items" id="syntax-errors-hidden" style="display: none;">
+                {% for error in result.syntax_errors[3:] %}
+                <div class="issue-item">
+                    <div style="font-weight: 500;">Line {{ error.line }}{% if error.column %}, Column {{ error.column }}{% endif %}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">{{ error.message }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="expand-toggle" onclick="toggleSection('syntax-errors')" style="color: var(--accent-color); font-size: 0.9rem; margin-top: 0.5rem; cursor: pointer; text-decoration: underline;">
+                <span id="syntax-errors-toggle">... and {{ result.syntax_errors | length - 3 }} more (click to expand)</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Security Issues -->
+        {% if result.security_issues %}
+        <div class="issue-section">
+            <h4 style="color: var(--error-color); margin-bottom: 1rem;">
+                <i class="fas fa-shield-alt"></i> Security Issues ({{ result.security_issues | length }})
+            </h4>
+            {% for issue in result.security_issues[:3] %}
+            <div class="issue-item">
+                <div style="font-weight: 500;">{{ issue.vulnerability_type }} ({{ issue.severity }})</div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Line {{ issue.line }}: {{ issue.message }}</div>
+            </div>
+            {% endfor %}
+            {% if result.security_issues | length > 3 %}
+            <div class="hidden-items" id="security-issues-hidden" style="display: none;">
+                {% for issue in result.security_issues[3:] %}
+                <div class="issue-item">
+                    <div style="font-weight: 500;">{{ issue.vulnerability_type }} ({{ issue.severity }})</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Line {{ issue.line }}: {{ issue.message }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="expand-toggle" onclick="toggleSection('security-issues')" style="color: var(--accent-color); font-size: 0.9rem; margin-top: 0.5rem; cursor: pointer; text-decoration: underline;">
+                <span id="security-issues-toggle">... and {{ result.security_issues | length - 3 }} more (click to expand)</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Performance Issues -->
+        {% if result.performance_efficiency %}
+        <div class="issue-section">
+            <h4 style="color: var(--warning-color); margin-bottom: 1rem;">
+                <i class="fas fa-tachometer-alt"></i> Performance ({{ result.performance_efficiency | length }})
+            </h4>
+            {% for issue in result.performance_efficiency[:3] %}
+            <div class="issue-item">
+                <div style="font-weight: 500;">{{ issue.category | title }} ({{ issue.severity }})</div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Lines {{ issue.line_start }}-{{ issue.line_end }}: {{ issue.message }}</div>
+            </div>
+            {% endfor %}
+            {% if result.performance_efficiency | length > 3 %}
+            <div class="hidden-items" id="performance-efficiency-hidden" style="display: none;">
+                {% for issue in result.performance_efficiency[3:] %}
+                <div class="issue-item">
+                    <div style="font-weight: 500;">{{ issue.category | title }} ({{ issue.severity }})</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Lines {{ issue.line_start }}-{{ issue.line_end }}: {{ issue.message }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="expand-toggle" onclick="toggleSection('performance-efficiency')" style="color: var(--accent-color); font-size: 0.9rem; margin-top: 0.5rem; cursor: pointer; text-decoration: underline;">
+                <span id="performance-efficiency-toggle">... and {{ result.performance_efficiency | length - 3 }} more (click to expand)</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Best Practices -->
+        {% if result.best_practices %}
+        <div class="issue-section">
+            <h4 style="color: var(--accent-color); margin-bottom: 1rem;">
+                <i class="fas fa-lightbulb"></i> Best Practices ({{ result.best_practices | length }})
+            </h4>
+            {% for practice in result.best_practices[:3] %}
+            <div class="issue-item">
+                <div style="font-weight: 500;">{{ practice.category | title }}</div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Line {{ practice.line }}: {{ practice.message }}</div>
+            </div>
+            {% endfor %}
+            {% if result.best_practices | length > 3 %}
+            <div class="hidden-items" id="best-practices-hidden" style="display: none;">
+                {% for practice in result.best_practices[3:] %}
+                <div class="issue-item">
+                    <div style="font-weight: 500;">{{ practice.category | title }}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Line {{ practice.line }}: {{ practice.message }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="expand-toggle" onclick="toggleSection('best-practices')" style="color: var(--accent-color); font-size: 0.9rem; margin-top: 0.5rem; cursor: pointer; text-decoration: underline;">
+                <span id="best-practices-toggle">... and {{ result.best_practices | length - 3 }} more (click to expand)</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Copy Success Message -->
+<div id="copy-success" class="alert alert-success" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;">
+    <i class="fas fa-check"></i> <span id="copy-message">Copied to clipboard!</span>
+</div>
+
+<style>
+.metric-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-card.critical .metric-value {
+    color: var(--error-color);
+}
+
+.metric-card.major .metric-value {
+    color: #fd7e14;
+}
+
+.metric-card.minor .metric-value {
+    color: var(--warning-color);
+}
+
+.metric-card.suggestions .metric-value {
+    color: var(--accent-color);
+}
+
+.metric-card.score .metric-value {
+    color: var(--success-color);
+}
+
+.json-container {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: auto;
+    max-height: 600px;
+}
+
+.json-container pre {
+    margin: 0;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.issue-section {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.issue-item {
+    padding: 0.75rem;
+    background-color: var(--bg-secondary);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid var(--accent-color);
+}
+
+.issue-item:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .card {
+        padding: 1rem;
+    }
+    
+    .metric-card {
+        padding: 0.75rem;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .json-container {
+        max-height: 400px;
+    }
+    
+    .json-container pre {
+        padding: 0.75rem;
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let isRawView = false;
+    
+    function toggleJsonView() {
+        const prettyJson = document.getElementById('pretty-json');
+        const rawJson = document.getElementById('raw-json');
+        const toggleBtn = document.getElementById('toggle-btn');
+        
+        if (isRawView) {
+            prettyJson.style.display = 'block';
+            rawJson.style.display = 'none';
+            toggleBtn.innerHTML = '<i class="fas fa-eye"></i> Pretty View';
+            isRawView = false;
+        } else {
+            prettyJson.style.display = 'none';
+            rawJson.style.display = 'block';
+            toggleBtn.innerHTML = '<i class="fas fa-code"></i> Raw View';
+            isRawView = true;
+        }
+    }
+    
+    function copyJson() {
+        const jsonText = document.getElementById('json-raw').value;
+        copyToClipboard(jsonText, 'JSON copied to clipboard!');
+    }
+    
+    function copyResults() {
+        const jsonText = document.getElementById('json-raw').value;
+        copyToClipboard(jsonText, 'Analysis results copied to clipboard!');
+    }
+    
+    function toggleSection(sectionName) {
+        const hiddenItems = document.getElementById(sectionName + '-hidden');
+        const toggleSpan = document.getElementById(sectionName + '-toggle');
+        
+        if (hiddenItems.style.display === 'none') {
+            hiddenItems.style.display = 'block';
+            toggleSpan.textContent = 'Show less (click to collapse)';
+        } else {
+            hiddenItems.style.display = 'none';
+            const itemCount = hiddenItems.children.length;
+            toggleSpan.textContent = `... and ${itemCount} more (click to expand)`;
+        }
+    }
+    
+    function copyToClipboard(text, message) {
+        navigator.clipboard.writeText(text).then(function() {
+            showCopySuccess(message);
+        }).catch(function(err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showCopySuccess(message);
+        });
+    }
+    
+    function showCopySuccess(message) {
+        const successDiv = document.getElementById('copy-success');
+        const messageSpan = document.getElementById('copy-message');
+        messageSpan.textContent = message;
+        successDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            successDiv.style.display = 'none';
+        }, 3000);
+    }
+    
+    // Handle page refresh - redirect to home if no session data
+    window.addEventListener('beforeunload', function() {
+        // This will trigger the server-side session check on refresh
+    });
+    
+    // Check if we should redirect to home (in case of direct URL access)
+    window.addEventListener('load', function() {
+        // If the page loads but there's an error or no data, redirect
+        const errorAlert = document.querySelector('.alert-error');
+        if (errorAlert && errorAlert.textContent.includes('No analysis result found')) {
+            window.location.href = '/';
+        }
+    });
+    
+    // Syntax highlighting for JSON (basic)
+    document.addEventListener('DOMContentLoaded', function() {
+        const jsonPretty = document.getElementById('json-pretty');
+        if (jsonPretty) {
+            let content = jsonPretty.textContent;
+            
+            // Basic JSON syntax highlighting
+            content = content.replace(/"([^"]+)":/g, '<span style="color: var(--accent-color);">"$1"</span>:');
+            content = content.replace(/: "([^"]*)"/g, ': <span style="color: var(--success-color);">"$1"</span>');
+            content = content.replace(/: (\d+)/g, ': <span style="color: #fd7e14;">$1</span>');
+            content = content.replace(/: (true|false|null)/g, ': <span style="color: var(--warning-color);">$1</span>');
+            
+            jsonPretty.innerHTML = content;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Code Analyzer - Processing{% endblock %}
+
+{% block content %}
+<div class="card text-center">
+    <h2 style="margin-bottom: 2rem; color: var(--accent-color);">
+        <i class="fas fa-cogs fa-spin"></i> Analyzing Your Code
+    </h2>
+    
+    <div style="margin-bottom: 2rem;">
+        <div class="spinner"></div>
+    </div>
+    
+    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem;">
+        Our AI is performing a comprehensive analysis of your code...
+    </p>
+    
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    
+    <div style="margin-top: 1rem; color: var(--text-secondary);">
+        <span id="progress-text">0%</span> - <span id="progress-status">Initializing analysis...</span>
+    </div>
+    
+    <!-- Analysis Steps -->
+    <div style="margin-top: 3rem; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+        <h3 style="color: var(--accent-color); margin-bottom: 1.5rem; text-align: center;">
+            <i class="fas fa-list-check"></i> Analysis Steps
+        </h3>
+        
+        <div class="analysis-steps">
+            <div class="step" id="step-1">
+                <div class="step-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Language Detection</h4>
+                    <p>Identifying programming language and version</p>
+                </div>
+            </div>
+            
+            <div class="step" id="step-2">
+                <div class="step-icon">
+                    <i class="fas fa-bug"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Syntax Analysis</h4>
+                    <p>Checking for syntax errors and violations</p>
+                </div>
+            </div>
+            
+            <div class="step" id="step-3">
+                <div class="step-icon">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Style & Quality</h4>
+                    <p>Evaluating code style and structure</p>
+                </div>
+            </div>
+            
+            <div class="step" id="step-4">
+                <div class="step-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Security Scan</h4>
+                    <p>Identifying security vulnerabilities</p>
+                </div>
+            </div>
+            
+            <div class="step" id="step-5">
+                <div class="step-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Performance Review</h4>
+                    <p>Analyzing performance and efficiency</p>
+                </div>
+            </div>
+            
+            <div class="step" id="step-6">
+                <div class="step-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="step-content">
+                    <h4>Generating Report</h4>
+                    <p>Compiling comprehensive analysis results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cancel Button -->
+    <div style="margin-top: 3rem;">
+        <a href="/" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Cancel Analysis
+        </a>
+    </div>
+</div>
+
+<style>
+.analysis-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    opacity: 0.5;
+}
+
+.step.active {
+    opacity: 1;
+    border-color: var(--accent-color);
+    background-color: var(--bg-secondary);
+}
+
+.step.completed {
+    opacity: 1;
+    border-color: var(--success-color);
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-icon {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.step.completed .step-icon {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.step.completed .step-icon i::before {
+    content: "\f00c"; /* checkmark */
+}
+
+.step-content h4 {
+    margin: 0 0 0.25rem 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.step-content p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .analysis-steps {
+        gap: 0.5rem;
+    }
+    
+    .step {
+        padding: 0.75rem;
+    }
+    
+    .step-icon {
+        width: 35px;
+        height: 35px;
+        margin-right: 0.75rem;
+    }
+    
+    .step-content h4 {
+        font-size: 0.9rem;
+    }
+    
+    .step-content p {
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let progress = 0;
+    let currentStep = 0;
+    let animationSpeed = 0.25; // Progress increment per frame (reduced from 0.5 to make it 2x slower)
+    let isComplete = false;
+    
+    const steps = [
+        { id: 'step-1', name: 'Language Detection', targetProgress: 15 },
+        { id: 'step-2', name: 'Syntax Analysis', targetProgress: 30 },
+        { id: 'step-3', name: 'Style & Quality', targetProgress: 45 },
+        { id: 'step-4', name: 'Security Scan', targetProgress: 60 },
+        { id: 'step-5', name: 'Performance Review', targetProgress: 75 },
+        { id: 'step-6', name: 'Generating Report', targetProgress: 90 }
+    ];
+    
+    // Start processing immediately
+    fetch('/process')
+        .then(response => response.json())
+        .then(data => {
+            isComplete = true;
+            if (data.success && data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                window.location.href = '/results';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            isComplete = true;
+            window.location.href = '/results';
+        });
+    
+    function checkAnalysisComplete() {
+        if (isComplete) return;
+        
+        fetch('/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                analysis_id: '{{ analysis_id }}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'complete') {
+                isComplete = true;
+                
+                // Complete all steps immediately
+                steps.forEach((step, index) => {
+                    document.getElementById(step.id).classList.add('completed');
+                    document.getElementById(step.id).classList.remove('active');
+                });
+                
+                // Show completion
+                document.getElementById('progress-status').textContent = 'Analysis complete!';
+                document.getElementById('progress-bar').style.width = '100%';
+                document.getElementById('progress-text').textContent = '100%';
+                
+                // Redirect to results after a short delay
+                setTimeout(() => {
+                    window.location.href = '/results/{{ analysis_id }}';
+                }, 1000);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking analysis status:', error);
+        });
+    }
+    
+    function updateProgress() {
+        if (isComplete) return;
+        
+        // Increment progress smoothly
+        if (progress < steps[currentStep].targetProgress) {
+            progress += animationSpeed;
+            if (progress > steps[currentStep].targetProgress) {
+                progress = steps[currentStep].targetProgress;
+            }
+        }
+        
+        // Check if we should move to next step
+        if (progress >= steps[currentStep].targetProgress && currentStep < steps.length - 1) {
+            // Mark current step as completed
+            document.getElementById(steps[currentStep].id).classList.add('completed');
+            document.getElementById(steps[currentStep].id).classList.remove('active');
+            
+            // Move to next step
+            currentStep++;
+            
+            // Activate next step
+            document.getElementById(steps[currentStep].id).classList.add('active');
+            document.getElementById('progress-status').textContent = steps[currentStep].name + '...';
+            
+            // Slow down animation for later steps
+            if (currentStep >= 4) {
+                animationSpeed = 0.2;
+            }
+        }
+        
+        // Update progress bar
+        document.getElementById('progress-bar').style.width = progress + '%';
+        document.getElementById('progress-text').textContent = Math.round(progress) + '%';
+        
+        // Continue animation
+        requestAnimationFrame(updateProgress);
+    }
+    
+    // Start progress animation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize progress bar to 0%
+        document.getElementById('progress-bar').style.width = '0%';
+        document.getElementById('progress-text').textContent = '0%';
+        
+        // Activate first step immediately
+        document.getElementById('step-1').classList.add('active');
+        document.getElementById('progress-status').textContent = 'Language Detection...';
+        
+        // Start progress animation
+        requestAnimationFrame(updateProgress);
+    });
+</script>
+{% endblock %}
