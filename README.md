@@ -59,6 +59,8 @@ code-analyzer/
 
 ## 🔧 Configuration
 
+- **AI Model**: Uses Google Gemini Flash 2.5 for code analysis
+- **Free Tier**: 500 requests per day at no cost
 - **File size limit**: 16MB (configurable in `app.py`)
 - **Supported formats**: .py, .js, .java, .cpp, .c, .cs, .php, .rb, .go, .rs, .swift, .kt, .ts, .html, .css, .sql, .sh, .bat, .ps1, .txt
 - **Progress duration**: Real-time tracking (configurable)
