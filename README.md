@@ -17,7 +17,7 @@ A Flask web application that analyzes your code using Google's Gemini AI. Get co
    pip install -r requirements.txt
    ```
 
-2. **Add your Gemini API key** to `env.txt`:
+2. **Add your Gemini API key** to `env.txt`: (you need to create this file in the root of the repo)
    ```
    your-gemini-api-key-here
    ```
