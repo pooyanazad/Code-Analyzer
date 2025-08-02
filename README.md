@@ -61,7 +61,7 @@ code-analyzer/
 
 - **File size limit**: 16MB (configurable in `app.py`)
 - **Supported formats**: .py, .js, .java, .cpp, .c, .cs, .php, .rb, .go, .rs, .swift, .kt, .ts, .html, .css, .sql, .sh, .bat, .ps1, .txt
-- **Progress duration**: 120 seconds (configurable)
+- **Progress duration**: Real-time tracking (configurable)
 
 ## 🛠️ Troubleshooting
 
@@ -79,3 +79,7 @@ code-analyzer/
 ---
 
 **Test Files**: Check the `tests/` folder for sample code files to validate the analyzer.
+
+## 🐛 Bug Reports & Feedback
+
+Please report any bugs, issues, or feature requests to help improve this tool. Your feedback is valuable for making the code analyzer better for everyone.
