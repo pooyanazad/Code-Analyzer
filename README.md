@@ -2,7 +2,7 @@
 
 A Flask web application that analyzes your code using Google's Gemini AI. Get comprehensive feedback on syntax, security, performance, and best practices with a modern dark/light mode interface.
 
-## ✨ Key Features
+##  Key Features
 
 - **Smart Analysis**: AI-powered code review covering syntax, security, performance, and best practices
 - **Multiple Input**: Paste code directly or upload files (supports 20+ file types)
@@ -10,7 +10,7 @@ A Flask web application that analyzes your code using Google's Gemini AI. Get co
 - **Real-time Progress**: Visual progress tracking during analysis
 - **Detailed Results**: Color-coded metrics and exportable JSON reports
 
-## 🚀 Quick Start
+##  Quick Start
 
 1. **Install dependencies**:
    ```bash
@@ -41,7 +41,7 @@ code-analyzer/
 └── tests/             # Test files for validation
 ```
 
-## 🎯 How to Use
+##  How to Use
 
 1. **Choose input method**: Paste code or upload a file
 2. **Submit for analysis**: Click "Analyze Code"
@@ -49,7 +49,7 @@ code-analyzer/
 4. **Review results**: Comprehensive feedback with metrics
 5. **Export**: Copy JSON results to clipboard
 
-## 📊 Analysis Coverage
+##  Analysis Coverage
 
 - **Syntax & Style**: Grammar, formatting, naming conventions
 - **Code Quality**: Complexity, duplication, modularity
@@ -57,7 +57,7 @@ code-analyzer/
 - **Performance**: Algorithm efficiency, memory usage
 - **Best Practices**: Modern coding standards
 
-## 🔧 Configuration
+##  Configuration
 
 - **AI Model**: Uses Google Gemini Flash 2.5 for code analysis
 - **Free Tier**: 500 requests per day at no cost
@@ -65,14 +65,14 @@ code-analyzer/
 - **Supported formats**: .py, .js, .java, .cpp, .c, .cs, .php, .rb, .go, .rs, .swift, .kt, .ts, .html, .css, .sql, .sh, .bat, .ps1, .txt
 - **Progress duration**: Real-time tracking (configurable)
 
-## 🛠️ Troubleshooting
+## 🛠 Troubleshooting
 
 **Common Issues:**
 - **API Key Error**: Check `env.txt` contains your valid Gemini API key
 - **File Upload Issues**: Ensure file is under 16MB and uses supported format
 - **Analysis Timeout**: Large files may take longer to process
 
-## 📝 Requirements
+##  Requirements
 
 - Python 3.7+
 - Google Gemini API key
